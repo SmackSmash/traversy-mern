@@ -34,7 +34,9 @@ router.post('/', async (req, res) => {
     await user.save();
     // Generate JWT
     const payload = {
-      id: user.id
+      user: {
+        id: user.id
+      }
     };
     const token = jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 360000 });
     res.send({ token });
