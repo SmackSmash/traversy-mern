@@ -12,14 +12,14 @@ const { User, validateSignUp } = require('../../models/user');
 router.post('/', async (req, res) => {
   const result = Joi.validate(req.body, validateSignUp, { abortEarly: false });
   if (result.error) {
-    return res.status(422).json({ errors: result.error.details.map(error => error.message) });
+    return res.status(422).send({ errors: result.error.details.map(error => error.message) });
   }
 
   const { name, email, password } = req.body;
   try {
     // Check user exists
     let user = await User.findOne({ email });
-    if (user) return res.status(422).json({ errors: [`User with email ${email} already exists`] });
+    if (user) return res.status(422).send({ errors: [`User with email ${email} already exists`] });
     // Get user's gravatar
     const avatar = gravatar.url(email, { s: '200', r: 'pg', d: 'mm' });
     // Encrypt password with 10 salt rounds
@@ -40,9 +40,9 @@ router.post('/', async (req, res) => {
     };
     const token = jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 360000 });
     res.send({ token });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Internal server error');
   }
 });
 

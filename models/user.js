@@ -39,7 +39,17 @@ const validateSignUp = Joi.object().keys({
     .min(7)
 });
 
+const validateSignIn = Joi.object().keys({
+  email: Joi.string()
+    .required()
+    .email({ minDomainAtoms: 2 }),
+  password: Joi.string()
+    .required()
+    .min(7)
+});
+
 module.exports = {
   User,
-  validateSignUp
+  validateSignUp,
+  validateSignIn
 };
