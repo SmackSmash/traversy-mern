@@ -1,23 +1,53 @@
 const router = require('express').Router();
-const { check, validationResult } = require('express-validator');
+const Joi = require('joi');
+const gravatar = require('gravatar');
+const bcrypt = require('bcryptjs');
+const User = require('../../models/user');
 
-// @route   GET api/users
+const schema = Joi.object().keys({
+  name: Joi.string()
+    .required()
+    .min(3)
+    .max(40),
+  email: Joi.string()
+    .required()
+    .email({ minDomainAtoms: 2 }),
+  password: Joi.string()
+    .required()
+    .min(7)
+});
+
+// @route   POST api/users
 // @desc    Register user
 // @access  Public
-router.post(
-  '/',
-  [
-    check('name', 'Name is required')
-      .not()
-      .isEmpty(),
-    check('email', 'Please enter a valid email').isEmail(),
-    check('password', 'Please enter an email of 6 or more characters').isLength({ min: 6 })
-  ],
-  (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
-    res.send('Users route');
+router.post('/', async (req, res) => {
+  const result = Joi.validate(req.body, schema, { abortEarly: false });
+  if (result.error) {
+    return res.status(422).json({ errors: result.error.details.map(error => error.message) });
   }
-);
+
+  const { name, email, password } = req.body;
+  try {
+    // Check user exists
+    let user = await User.findOne({ email });
+    if (user) return res.status(422).json({ errors: [`User with email ${email} already exists`] });
+    // Get user's gravatar
+    const avatar = gravatar.url(email, { s: '200', r: 'pg', d: 'mm' });
+    // Encrypt password with 10 salt rounds
+    const encrypted = await bcrypt.hash(password, 10);
+    // Return JWT
+    user = new User({
+      name,
+      email,
+      avatar,
+      password: encrypted
+    });
+    await user.save();
+    res.send('Users route');
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
 
 module.exports = router;
