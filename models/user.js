@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-const User = mongoose.model('users', UserSchema);
+const User = mongoose.model('user', UserSchema);
 
 const validateSignUp = Joi.object().keys({
   name: Joi.string()

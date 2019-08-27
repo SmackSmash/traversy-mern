@@ -14,7 +14,6 @@ router.get('/me', auth, async (req, res) => {
       'name',
       'avatar'
     ]);
-    console.log(profile);
     if (!profile) {
       return res.status(400).send({ errors: 'There is no profile for this user' });
     }
@@ -82,6 +81,61 @@ router.post('/', auth, async (req, res) => {
     profile = new Profile(profileFields);
     await profile.save();
     res.send(profile);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// @route   GET api/profile
+// @desc    Get all profiles
+// @access  Public
+router.get('/', async (req, res) => {
+  try {
+    const profiles = await Profile.find().populate('user', ['name', 'avatar']);
+    res.send(profiles);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// @route   GET api/profile/user/:user_id
+// @desc    Get profile by id
+// @access  Public
+router.get('/user/:user_id', async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ user: req.params.user_id }).populate('user', [
+      'name',
+      'avatar'
+    ]);
+    if (!profile) {
+      return res.status(404).send({
+        errors: [`No user profile found for user with id ${req.params.user_id}`]
+      });
+    }
+    res.send(profile);
+  } catch (error) {
+    console.error(error.message);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).send({
+        errors: [`No user profile found for user with id ${req.params.user_id}`]
+      });
+    }
+    res.status(500).send('Internal server error');
+  }
+});
+
+// @route   DELETE api/profile
+// @desc    Delete logged in user, profile, & posts
+// @access  Private
+router.delete('/', auth, async (req, res) => {
+  try {
+    // @TODO - Remove user's posts
+    console.log(req.user.id);
+    await Profile.findOneAndRemove({ user: req.user.id });
+    await User.findByIdAndRemove(req.user.id);
+    res.send('User deleted');
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Internal server error');
