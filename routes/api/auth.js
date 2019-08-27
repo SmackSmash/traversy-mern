@@ -38,14 +38,14 @@ router.post('/', async (req, res) => {
     let user = await User.findOne({ email });
     if (!user) {
       return res.status(401).send({
-        errors: [`No user with email ${email} exists in database`]
+        errors: [`Invalid credentials`]
       });
     }
     // Check passwords match
     const matches = await bcrypt.compare(password, user.password);
     if (!matches) {
       return res.status(401).send({
-        errors: [`Passwords do not match`]
+        errors: [`Invalid credentials`]
       });
     }
     // Create JWT and send to user
