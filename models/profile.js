@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Joi = require('joi');
 
 const profileSchema = new mongoose.Schema({
   user: {
@@ -117,6 +118,14 @@ const profileSchema = new mongoose.Schema({
 
 const Profile = mongoose.model('profile', profileSchema);
 
+const validateProfile = Joi.object()
+  .keys({
+    status: Joi.string().required(),
+    skills: Joi.string().required()
+  })
+  .options({ allowUnknown: true });
+
 module.exports = {
-  Profile
+  Profile,
+  validateProfile
 };

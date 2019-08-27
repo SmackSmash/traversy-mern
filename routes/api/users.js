@@ -10,6 +10,7 @@ const { User, validateSignUp } = require('../../models/user');
 // @desc    Register user
 // @access  Public
 router.post('/', async (req, res) => {
+  // Validate incoming data
   const result = Joi.validate(req.body, validateSignUp, { abortEarly: false });
   if (result.error) {
     return res.status(422).send({ errors: result.error.details.map(error => error.message) });
