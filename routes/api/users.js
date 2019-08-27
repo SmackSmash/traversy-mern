@@ -2,26 +2,15 @@ const router = require('express').Router();
 const Joi = require('joi');
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
-const User = require('../../models/user');
-
-const schema = Joi.object().keys({
-  name: Joi.string()
-    .required()
-    .min(3)
-    .max(40),
-  email: Joi.string()
-    .required()
-    .email({ minDomainAtoms: 2 }),
-  password: Joi.string()
-    .required()
-    .min(7)
-});
+const jwt = require('jsonwebtoken');
+const config = require('config');
+const { User, validateSignUp } = require('../../models/user');
 
 // @route   POST api/users
 // @desc    Register user
 // @access  Public
 router.post('/', async (req, res) => {
-  const result = Joi.validate(req.body, schema, { abortEarly: false });
+  const result = Joi.validate(req.body, validateSignUp, { abortEarly: false });
   if (result.error) {
     return res.status(422).json({ errors: result.error.details.map(error => error.message) });
   }
@@ -43,7 +32,12 @@ router.post('/', async (req, res) => {
       password: encrypted
     });
     await user.save();
-    res.send('Users route');
+    // Generate JWT
+    const payload = {
+      id: user.id
+    };
+    const token = jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 360000 });
+    res.send({ token });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
