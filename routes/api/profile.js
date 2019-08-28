@@ -9,6 +9,11 @@ const {
   validateEducation
 } = require('../../models/profile');
 
+const handleError = error => {
+  console.error(error);
+  res.status(500).send('Internal server error');
+};
+
 // @route   GET api/profile/me
 // @desc    Get current user's profile
 // @access  Private
@@ -24,8 +29,7 @@ router.get('/me', auth, async (req, res) => {
     }
     res.send(profile);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleError(error);
   }
 });
 
@@ -87,8 +91,7 @@ router.post('/', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleError(error);
   }
 });
 
@@ -100,8 +103,7 @@ router.get('/', async (req, res) => {
     const profiles = await Profile.find().populate('user', ['name', 'avatar']);
     res.send(profiles);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleError(error);
   }
 });
 
@@ -141,8 +143,7 @@ router.delete('/', auth, async (req, res) => {
     await User.findByIdAndRemove(req.user.id);
     res.send({ msg: 'User deleted' });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleError(error);
   }
 });
 
@@ -172,8 +173,7 @@ router.put('/experience', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleError(error);
   }
 });
 
@@ -184,23 +184,18 @@ router.delete('/experience/:exp_id', auth, async (req, res) => {
   try {
     const profile = await Profile.findOne({ user: req.user.id });
     // Check experience entry exists
-    const experienceEntry = profile.experience.find(
-      experience => experience.id === req.params.exp_id
-    );
+    const experienceEntry = profile.experience.find(entry => entry.id === req.params.exp_id);
     if (!experienceEntry) {
       return res.status(400).send({
         errors: [`No experience entry exists with that ID`]
       });
     }
     // Filter out the desired experience entry
-    profile.experience = profile.experience.filter(
-      experience => experience.id !== req.params.exp_id
-    );
+    profile.experience = profile.experience.filter(entry => entry.id !== req.params.exp_id);
     await profile.save();
     res.send(profile);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleError(error);
   }
 });
 
@@ -230,10 +225,31 @@ router.put('/education', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleError(error);
   }
   res.send('Success!');
+});
+
+// @route   DELETE api/profile/education/:edu_id
+// @desc    Delete an education entry
+// @access  Private
+router.delete('/education/:edu_id', auth, async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ user: req.user.id });
+    // Check education entry exists
+    const educationEntry = profile.education.find(entry => entry.id === req.params.edu_id);
+    if (!educationEntry) {
+      return res.status(422).send({
+        errors: [`No education entry exists with that ID`]
+      });
+    }
+    // Filter out the desired education entry
+    profile.education = profile.education.filter(entry => entry.id !== req.params.edu_id);
+    await profile.save();
+    res.send(profile);
+  } catch (error) {
+    handleError(error);
+  }
 });
 
 module.exports = router;
