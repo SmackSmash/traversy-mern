@@ -2,7 +2,12 @@ const router = require('express').Router();
 const auth = require('../../middleware/auth');
 const Joi = require('joi');
 const { User } = require('../../models/user');
-const { Profile, validateProfile, validateExperience } = require('../../models/profile');
+const {
+  Profile,
+  validateProfile,
+  validateExperience,
+  validateEducation
+} = require('../../models/profile');
 
 // @route   GET api/profile/me
 // @desc    Get current user's profile
@@ -152,7 +157,7 @@ router.put('/experience', auth, async (req, res) => {
       errors: result.error.details.map(error => error.message)
     });
   }
-  // Destructure data for ease of use
+  // Reassign data for readability
   const experience = { ...req.body };
   try {
     // Check user profile exists
@@ -162,6 +167,7 @@ router.put('/experience', auth, async (req, res) => {
         errors: ['User profile does not exist']
       });
     }
+    // Add experience data
     profile.experience.unshift(experience);
     await profile.save();
     res.send(profile);
@@ -172,7 +178,7 @@ router.put('/experience', auth, async (req, res) => {
 });
 
 // @route   DELETE api/profile/experience/:exp_id
-// @desc    Delete an evperience document
+// @desc    Delete an experience entry
 // @access  Private
 router.delete('/experience/:exp_id', auth, async (req, res) => {
   try {
@@ -196,6 +202,38 @@ router.delete('/experience/:exp_id', auth, async (req, res) => {
     console.error(error.message);
     res.status(500).send('Internal server error');
   }
+});
+
+// @route   PUT api/profile/education
+// @desc    Update profile education
+// @access  Private
+router.put('/education', auth, async (req, res) => {
+  // Validate incoming data
+  const result = Joi.validate(req.body, validateEducation, { abortEarly: false });
+  if (result.error) {
+    return res.status(422).send({
+      errors: result.error.details.map(error => error.message)
+    });
+  }
+  // Reassign data for readability
+  const education = { ...req.body };
+  try {
+    // Check user profile exists
+    const profile = await Profile.findOne({ user: req.user.id });
+    if (!profile) {
+      return res.status(422).send({
+        errors: ['User profile does not exist']
+      });
+    }
+    // Add experience data
+    profile.education.unshift(education);
+    await profile.save();
+    res.send(profile);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Internal server error');
+  }
+  res.send('Success!');
 });
 
 module.exports = router;

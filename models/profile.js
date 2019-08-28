@@ -133,8 +133,18 @@ const validateExperience = Joi.object()
   })
   .options({ allowUnknown: true });
 
+const validateEducation = Joi.object()
+  .keys({
+    school: Joi.string().required(),
+    degree: Joi.string().required(),
+    fieldofstudy: Joi.string().required(),
+    from: Joi.date().required()
+  })
+  .options({ allowUnknown: true });
+
 module.exports = {
   Profile,
   validateProfile,
-  validateExperience
+  validateExperience,
+  validateEducation
 };
