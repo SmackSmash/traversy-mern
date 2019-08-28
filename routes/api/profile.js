@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const auth = require('../../middleware/auth');
 const Joi = require('joi');
+const request = require('request');
+const config = require('config');
 const { User } = require('../../models/user');
 const {
   Profile,
@@ -9,7 +11,7 @@ const {
   validateEducation
 } = require('../../models/profile');
 
-const handleError = error => {
+const handleServerError = error => {
   console.error(error);
   res.status(500).send('Internal server error');
 };
@@ -29,7 +31,7 @@ router.get('/me', auth, async (req, res) => {
     }
     res.send(profile);
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
   }
 });
 
@@ -91,7 +93,7 @@ router.post('/', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
   }
 });
 
@@ -103,7 +105,7 @@ router.get('/', async (req, res) => {
     const profiles = await Profile.find().populate('user', ['name', 'avatar']);
     res.send(profiles);
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
   }
 });
 
@@ -143,7 +145,7 @@ router.delete('/', auth, async (req, res) => {
     await User.findByIdAndRemove(req.user.id);
     res.send({ msg: 'User deleted' });
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
   }
 });
 
@@ -173,7 +175,7 @@ router.put('/experience', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
   }
 });
 
@@ -195,7 +197,7 @@ router.delete('/experience/:exp_id', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
   }
 });
 
@@ -225,7 +227,7 @@ router.put('/education', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
   }
   res.send('Success!');
 });
@@ -248,7 +250,35 @@ router.delete('/education/:edu_id', auth, async (req, res) => {
     await profile.save();
     res.send(profile);
   } catch (error) {
-    handleError(error);
+    handleServerError(error);
+  }
+});
+
+// @route   api/profile/github/:username
+// @desc    Get user repos from Github
+// @access  Public
+router.get('/github/:username', async (req, res) => {
+  try {
+    const options = {
+      uri: `https://api.github.com/users/${
+        req.params.username
+      }/repos?per_page=5&sort=created:asc&client_id=${config.get(
+        'githubClientID'
+      )}&client_secret=${config.get('githubClientSecret')}`,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Dev-Connector'
+      }
+    };
+    request(options, (error, response, body) => {
+      if (error) console.error(error);
+      if (response.statusCode !== 200) {
+        return res.status(404).send({ msg: 'No Github profile found' });
+      }
+      res.send(JSON.parse(body));
+    });
+  } catch (error) {
+    handleServerError(error);
   }
 });
 
