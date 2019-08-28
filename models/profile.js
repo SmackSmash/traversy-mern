@@ -125,7 +125,16 @@ const validateProfile = Joi.object()
   })
   .options({ allowUnknown: true });
 
+const validateExperience = Joi.object()
+  .keys({
+    title: Joi.string().required(),
+    company: Joi.string().required(),
+    from: Joi.date().required()
+  })
+  .options({ allowUnknown: true });
+
 module.exports = {
   Profile,
-  validateProfile
+  validateProfile,
+  validateExperience
 };

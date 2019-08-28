@@ -2,7 +2,7 @@ const router = require('express').Router();
 const auth = require('../../middleware/auth');
 const Joi = require('joi');
 const { User } = require('../../models/user');
-const { Profile, validateProfile } = require('../../models/profile');
+const { Profile, validateProfile, validateExperience } = require('../../models/profile');
 
 // @route   GET api/profile/me
 // @desc    Get current user's profile
@@ -132,10 +132,39 @@ router.get('/user/:user_id', async (req, res) => {
 router.delete('/', auth, async (req, res) => {
   try {
     // @TODO - Remove user's posts
-    console.log(req.user.id);
     await Profile.findOneAndRemove({ user: req.user.id });
     await User.findByIdAndRemove(req.user.id);
-    res.send('User deleted');
+    res.send({ msg: 'User deleted' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Internal server error');
+  }
+});
+
+// @route   PUT api/profile/experience
+// @desc    Update profile experience
+// @access  Private
+router.put('/experience', auth, async (req, res) => {
+  // Validate request data
+  const result = Joi.validate(req.body, validateExperience, { abortEarly: false });
+  if (result.error) {
+    return res.status(422).send({
+      errors: result.error.details.map(error => error.message)
+    });
+  }
+  // Destructure data for ease of use
+  const experience = { ...req.body };
+  try {
+    // Check user profile exists
+    const profile = await Profile.findOne({ user: req.user.id });
+    if (!profile) {
+      return res.status(400).send({
+        errors: ['User profile does not exist']
+      });
+    }
+    profile.experience.unshift(experience);
+    await profile.save();
+    res.send(profile);
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Internal server error');
