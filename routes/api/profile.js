@@ -171,4 +171,31 @@ router.put('/experience', auth, async (req, res) => {
   }
 });
 
+// @route   DELETE api/profile/experience/:exp_id
+// @desc    Delete an evperience document
+// @access  Private
+router.delete('/experience/:exp_id', auth, async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ user: req.user.id });
+    // Check experience entry exists
+    const experienceEntry = profile.experience.find(
+      experience => experience.id === req.params.exp_id
+    );
+    if (!experienceEntry) {
+      return res.status(400).send({
+        errors: [`No experience entry exists with that ID`]
+      });
+    }
+    // Filter out the desired experience entry
+    profile.experience = profile.experience.filter(
+      experience => experience.id !== req.params.exp_id
+    );
+    await profile.save();
+    res.send(profile);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Internal server error');
+  }
+});
+
 module.exports = router;
