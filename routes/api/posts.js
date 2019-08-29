@@ -70,7 +70,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // @route   DELETE api/posts/:id
-// @desc    Deleta a post
+// @desc    Delete a post
 // @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
@@ -195,6 +195,50 @@ router.post('/comment/:id', auth, async (req, res) => {
     res.send(post.comments);
   } catch (error) {
     handleServerError(error);
+  }
+});
+
+// @route   DELETE api/posts/comment/:id/:comment_id
+// @desc    Delete a comment
+// @access  Private
+router.delete('/comment/:id/:comment_id', auth, async (req, res) => {
+  try {
+    // Fetch post
+    const post = await Post.findById(req.params.id);
+    // Check post exists
+    if (!post) {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    // Check comment exists
+    const comment = post.comments.find(comment => comment.id.toString() === req.params.comment_id);
+    if (!comment) {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    // Check comment author matches logged in user
+    // ObjectID must be first converted to string!
+    if (comment.user.toString() !== req.user.id) {
+      return res.status(401).send({
+        errors: ['Unauthorized!']
+      });
+    }
+    post.comments = post.comments.filter(
+      comment => comment.id.toString() !== req.params.comment_id
+    );
+    // Delete post
+    await post.save();
+    res.send('Comment removed');
+  } catch (error) {
+    console.error(error.message);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    res.status(500).send('Internal server error');
   }
 });
 
