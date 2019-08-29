@@ -49,12 +49,57 @@ router.get('/', auth, async (req, res) => {
 // @route   GET api/posts/:post_id
 // @desc    Get post by id
 // @access  Private
-router.get('/:post_id', auth, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
-    const post = await Post.findById(req.params.post_id);
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
     res.send(post);
   } catch (error) {
-    handleServerError(error);
+    console.error(error.message);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    res.status(500).send('Internal server error');
+  }
+});
+
+// @route   DELETE api/posts/:id
+// @desc    Deleta a post
+// @access  Private
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    // Fetch post
+    const post = await Post.findById(req.params.id);
+    // Check post exists
+    if (!post) {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    // Check post author matches logged in user
+    // ObjectID must be first converted to string!
+    if (post.user.toString() !== req.user.id) {
+      return res.status(401).send({
+        errors: ['Unauthorized!']
+      });
+    }
+    // Delete post
+    await post.remove();
+    res.send('Post removed');
+  } catch (error) {
+    console.error(error.message);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    res.status(500).send('Internal server error');
   }
 });
 
