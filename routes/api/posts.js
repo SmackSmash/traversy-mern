@@ -155,7 +155,6 @@ router.put('/unlike/:id', auth, async (req, res) => {
     // Remove signed like to likes array
     post.likes = post.likes.filter(like => like.user.toString() !== req.user.id);
     await post.save();
-    console.log(req.user.id);
     res.send(post.likes);
   } catch (error) {
     handleServerError(error);
