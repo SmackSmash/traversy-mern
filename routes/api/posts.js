@@ -161,4 +161,41 @@ router.put('/unlike/:id', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/posts/comment/:id
+// @desc    Comment on a post
+// @access  Private
+router.post('/comment/:id', auth, async (req, res) => {
+  // Validate incoming data
+  const response = Joi.validate(req.body, validatePost, { abortEarly: false });
+  if (response.error) {
+    return res.status(422).send({
+      errors: response.error.details.map(error => error.message)
+    });
+  }
+  try {
+    // Fetch post
+    const post = await Post.findById(req.params.id);
+    // Check post exists
+    if (!post) {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    // Get current user data to add to comment
+    const { name, avatar } = await User.findById(req.user.id).select('-password');
+    // Build and save comment
+    const newComment = {
+      user: req.user.id,
+      text: req.body.text,
+      name,
+      avatar
+    };
+    post.comments.unshift(newComment);
+    await post.save();
+    res.send(post.comments);
+  } catch (error) {
+    handleServerError(error);
+  }
+});
+
 module.exports = router;
