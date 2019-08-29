@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const { User, validateSignUp } = require('../../models/user');
+const handleServerError = require('../../utils/handleServerError');
 
 // @route   POST api/users
 // @desc    Register user
@@ -42,8 +43,7 @@ router.post('/', async (req, res) => {
     const token = jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 360000 });
     res.send({ token });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleServerError(error);
   }
 });
 

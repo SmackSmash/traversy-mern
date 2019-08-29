@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
+const Joi = require('joi');
 
 const Post = mongoose.model(
   'post',
   new mongoose.Schema({
     user: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'users'
     },
     text: {
@@ -20,7 +21,7 @@ const Post = mongoose.model(
     likes: [
       {
         user: {
-          type: Schema.Types.ObjectId,
+          type: mongoose.Schema.Types.ObjectId,
           ref: 'users'
         }
       }
@@ -28,7 +29,7 @@ const Post = mongoose.model(
     comments: [
       {
         user: {
-          type: Schema.Types.ObjectId,
+          type: mongoose.Schema.Types.ObjectId,
           ref: 'users'
         },
         text: {
@@ -54,4 +55,10 @@ const Post = mongoose.model(
   })
 );
 
-module.exports = { Post };
+const validatePost = Joi.object().keys({
+  text: Joi.string()
+    .required()
+    .min(1)
+}).options({ allowUnknown: true });
+
+module.exports = { Post, validatePost };

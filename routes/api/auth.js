@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const config = require('config');
 const auth = require('../../middleware/auth');
 const { User, validateSignIn } = require('../../models/user');
+const handleServerError = require('../../utils/handleServerError');
 
 // @route   GET api/auth
 // @desc    Test route
@@ -15,8 +16,7 @@ router.get('/', auth, async (req, res) => {
     const user = await User.findById(req.user.id).select('-password');
     res.send(user);
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleServerError(error);
   }
 });
 
@@ -57,8 +57,7 @@ router.post('/', async (req, res) => {
     const token = jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 360000 });
     res.send({ token });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Internal server error');
+    handleServerError(error);
   }
 });
 

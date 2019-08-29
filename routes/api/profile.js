@@ -10,11 +10,7 @@ const {
   validateExperience,
   validateEducation
 } = require('../../models/profile');
-
-const handleServerError = error => {
-  console.error(error);
-  res.status(500).send('Internal server error');
-};
+const handleServerError = require('../../utils/handleServerError');
 
 // @route   GET api/profile/me
 // @desc    Get current user's profile
