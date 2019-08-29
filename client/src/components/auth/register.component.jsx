@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 const Register = props => {
   const [formData, setFormData] = useState({
@@ -16,18 +16,8 @@ const Register = props => {
   const handleSubmit = async e => {
     e.preventDefault();
     if (password !== password2) return console.log('Passwords do not match');
-    try {
-      const response = await axios.post(
-        '/api/users',
-        { name, email, password },
-        {
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-      console.log(response.data);
-    } catch (error) {
-      console.error(error.response.data);
-    }
+    // TODO - Add redux action to register user
+    console.log(formData);
   };
 
   return (
@@ -82,7 +72,7 @@ const Register = props => {
         <input type="submit" className="btn btn-primary" value="Register" />
       </form>
       <p className="my-1">
-        Already have an account? <a href="login.html">Sign In</a>
+        Already have an account? <Link to="/login">Sign In</Link>
       </p>
     </section>
   );
