@@ -117,15 +117,45 @@ router.put('/like/:id', auth, async (req, res) => {
       });
     }
     // Check logged in user has not previously liked post
-    const like = post.likes.find(like => like.user.toString() === req.params.id);
+    const like = post.likes.find(like => like.user.toString() === req.user.id);
     if (like) {
-      res.status(401).send({
+      return res.status(401).send({
         errors: ['You already liked this post']
       });
     }
     // Add signed like to likes array
-    post.likes.unshift({ user: req.params.id });
+    post.likes.unshift({ user: req.user.id });
     await post.save();
+    res.send(post.likes);
+  } catch (error) {
+    handleServerError(error);
+  }
+});
+
+// @route   PUT api/posts/unlike/:id
+// @desc    Unike a post
+// @access  Private
+router.put('/unlike/:id', auth, async (req, res) => {
+  try {
+    // Fetch post
+    const post = await Post.findById(req.params.id);
+    // Check post exists
+    if (!post) {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    // Check logged in user has previously liked post
+    const like = post.likes.find(like => like.user.toString() === req.user.id);
+    if (!like) {
+      return res.status(401).send({
+        errors: ["You haven't already liked this post"]
+      });
+    }
+    // Remove signed like to likes array
+    post.likes = post.likes.filter(like => like.user.toString() !== req.user.id);
+    await post.save();
+    console.log(req.user.id);
     res.send(post.likes);
   } catch (error) {
     handleServerError(error);
