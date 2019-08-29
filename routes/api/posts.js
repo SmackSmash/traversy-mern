@@ -103,4 +103,33 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// @route   PUT api/posts/like/:id
+// @desc    Like a post
+// @access  Private
+router.put('/like/:id', auth, async (req, res) => {
+  try {
+    // Fetch post
+    const post = await Post.findById(req.params.id);
+    // Check post exists
+    if (!post) {
+      return res.status(404).send({
+        errors: ['Not found']
+      });
+    }
+    // Check logged in user has not previously liked post
+    const like = post.likes.find(like => like.user.toString() === req.params.id);
+    if (like) {
+      res.status(401).send({
+        errors: ['You already liked this post']
+      });
+    }
+    // Add signed like to likes array
+    post.likes.unshift({ user: req.params.id });
+    await post.save();
+    res.send(post.likes);
+  } catch (error) {
+    handleServerError(error);
+  }
+});
+
 module.exports = router;
