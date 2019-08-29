@@ -34,4 +34,28 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// @route   GET api/posts
+// @desc    Get all posts
+// @access  Private
+router.get('/', auth, async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ date: -1 });
+    res.send(posts);
+  } catch (error) {
+    handleServerError(error);
+  }
+});
+
+// @route   GET api/posts/:post_id
+// @desc    Get post by id
+// @access  Private
+router.get('/:post_id', auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.post_id);
+    res.send(post);
+  } catch (error) {
+    handleServerError(error);
+  }
+});
+
 module.exports = router;
