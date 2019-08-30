@@ -12,7 +12,6 @@ const handleServerError = require('../../utils/handleServerError');
 // @access  Public
 router.get('/', auth, async (req, res) => {
   try {
-    console.log(req.user.id);
     const user = await User.findById(req.user.id).select('-password');
     res.send(user);
   } catch (error) {
